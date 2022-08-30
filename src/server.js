@@ -18,14 +18,25 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server }); // websocket 서버 생성
 
+const sockets = [];
+
 wss.on("connection", (socket) => { // 여기서 socket은 연결된 브라우저를 뜻함
+    sockets.push(socket);
+    socket["nickname"] = "Anon"
     console.log("Connected to Browser ✅");
     // 새로운 브라우저가 접속하게 되면 socket.on 코드가 실행됨
     socket.on("close", () => console.log("Disconnected from the Browser ❌")) // frontend에서의 close 이벤트를 listen 하는 것 = 브라우저 탭을 닫으면 (브라우저 연결이 끊기면) 실행
-    socket.on("message", (message) => { // 브라우저가 서버에 메세지를 보냈을 때를 위한 listener
-        console.log(message.toString());
+    socket.on("message", (msg) => { // 브라우저가 서버에 메세지를 보냈을 때를 위한 listener
+        const message = JSON.parse(msg.toString());
+        switch(message.type) {
+            case "new_message":
+                sockets.forEach(aSocket => aSocket.send(`${socket.nickname}: ${message.payload}`));
+                break;
+            case "nickname":
+                socket["nickname"] = message.payload;
+                break;
+        }
     });
-    socket.send("hello :)"); // 브라우저에 메세지를 보냄
 });
 
 server.listen(3000, handleListen);
