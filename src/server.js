@@ -1,5 +1,5 @@
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 import express from "express";
 
 const app = express();
@@ -15,9 +15,21 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
 // 같은 포트에 서버와 웹소켓을 같이 실행시키기 위한 설정
 // http 서버에 접근해서 그 서버위에 webSocket 서버를 만들 수 있게 함
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server }); // websocket 서버 생성
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
 
+wsServer.on("connection", socket => {
+    socket.on("enter_room", (roomName, done) => {
+        console.log(roomName);
+        setTimeout(() => {
+            done();
+        })
+    });
+});
+
+
+/* 
+const wss = new WebSocket.Server({ server }); // websocket 서버 생성
 const sockets = [];
 
 wss.on("connection", (socket) => { // 여기서 socket은 연결된 브라우저를 뜻함
@@ -37,6 +49,6 @@ wss.on("connection", (socket) => { // 여기서 socket은 연결된 브라우저
                 break;
         }
     });
-});
+}); */
 
-server.listen(3000, handleListen);
+httpServer.listen(3000, handleListen);
