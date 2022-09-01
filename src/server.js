@@ -1,5 +1,6 @@
 import http from "http";
-import SocketIO from "socket.io";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 import express from "express";
 
 const app = express();
@@ -15,7 +16,16 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 // 같은 포트에 서버와 웹소켓을 같이 실행시키기 위한 설정
 // http 서버에 접근해서 그 서버위에 webSocket 서버를 만들 수 있게 함
 const httpServer = http.createServer(app);
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true,
+  },
+});
+
+instrument(wsServer, {
+  auth: false,
+});
 
 function publicRooms() {
   const {
@@ -32,29 +42,38 @@ function publicRooms() {
   return publicRooms;
 }
 
+function countRoom(roomName) {
+  return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
+
 wsServer.on("connection", (socket) => {
   socket["nickname"] = "Anon";
   socket.onAny((event) => {
     console.log(`Socket Event : ${event}`);
   });
+
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName); // socket.io에 있는 room 기능
     done();
-    socket.to(roomName).emit("welcome", socket.nickname);
+    socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
     wsServer.sockets.emit("room_change", publicRooms());
   });
+
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => {
-      socket.to(room).emit("bye", socket.nickname);
+      socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1);
     });
   });
+
   socket.on("disconnect", () => {
     wsServer.sockets.emit("room_change", publicRooms());
   });
+
   socket.on("new_message", (msg, room, done) => {
     socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
     done();
   });
+
   socket.on("nickname", (nickname) => {
     socket["nickname"] = nickname;
   });
