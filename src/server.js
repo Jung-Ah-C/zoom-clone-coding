@@ -1,6 +1,5 @@
 import http from "http";
-import { Server } from "socket.io";
-import { instrument } from "@socket.io/admin-ui";
+import SocketIO from "socket.io";
 import express from "express";
 
 const app = express();
@@ -16,13 +15,21 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 // 같은 포트에 서버와 웹소켓을 같이 실행시키기 위한 설정
 // http 서버에 접근해서 그 서버위에 webSocket 서버를 만들 수 있게 함
 const httpServer = http.createServer(app);
-const wsServer = new Server(httpServer, {
-  cors: {
-    origin: ["https://admin.socket.io"],
-    credentials: true,
-  },
-});
+const wsServer = SocketIO(httpServer);
 
+wsServer.on("connection", (socket) => {
+  socket.on("join_room", (roomName) => {
+    socket.join(roomName);
+    socket.to(roomName).emit("welcome");
+  });
+  socket.on("offer", (offer, roomName) => {
+    socket.to(roomName).emit("offer", offer);
+  });
+  socket.on("answer", (answer, roomName) => {
+    socket.to(roomName).emit("answer", answer);
+  });
+});
+/*
 instrument(wsServer, {
   auth: false,
 });
@@ -77,7 +84,7 @@ wsServer.on("connection", (socket) => {
   socket.on("nickname", (nickname) => {
     socket["nickname"] = nickname;
   });
-});
+}); */
 
 /* 
 const wss = new WebSocket.Server({ server }); // websocket 서버 생성
