@@ -4,16 +4,21 @@ html(lang="en")
         meta(charset="UTF-8")
         meta(http-equiv="X-UA-Compatible", content="IE=edge")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
-        title Noom
-        link(rel="stylesheet", href="https://unpkg.com/mvp.css")
+        title Hi There🖐 (Video Chat)
+        link(rel="preconnect", href="https://fonts.googleapis.com")
+        link(rel="preconnect", href="https://fonts.gstatic.com" crossorigin)
+        link(rel="stylesheet", href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR&display=swap")
+
     body 
         header
-            h1 Noom
+            h1 Hi There🖐 (Video Chat Service)
+            h3 채팅방 이름과 닉네임을 입력해주세요.
         main
             div#welcome
                 form 
-                    input(placeholder="room name", required, type="text")
-                    button Enter Room
+                    input#roomName(placeholder="채팅방 이름을 입력하세요.", required, type="text")
+                    input#nickName(placeholder="사용할 닉네임을 입력하세요.", required, type="text")
+                    button 입장하기
             div#call
                 div#myStream
                     video#myFace(autoplay, playsinline, width="400", height="400")
@@ -23,3 +28,6 @@ html(lang="en")
                     video#peerFace(autoplay, playsinline, width="400", height="400")
         script(src="/socket.io/socket.io.js")
         script(src="/public/js/app.js")
+        style 
+            include style.css
+            
